@@ -1,0 +1,11 @@
+# Experiments were run inside Docker image `cpop_v2` (CUDA, RTX 4090).
+torch==2.3.1
+torchvision
+diffusers==0.29.2
+torchattacks
+numpy
+pandas
+scikit-learn
+matplotlib
+pillow
+tqdm

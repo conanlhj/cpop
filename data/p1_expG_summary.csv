@@ -1,0 +1,4 @@
+variant,mean,std,min
+"CPOP_default(t1,s.005,K8)",0.911,0.012,0.894
+"CPOP_global(t1,s0.005,K16)",0.911,0.012,0.894
+"CPOP_perarch(t,s per arch)",0.911,0.013,0.892

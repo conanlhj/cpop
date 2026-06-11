@@ -1,0 +1,5 @@
+arch,cpop,raw_var,score_norm
+resnet50,0.914,0.812,0.838
+densenet121,0.902,0.792,0.839
+vit_b_16,0.886,0.772,0.829
+swin_t,0.929,0.836,0.825
