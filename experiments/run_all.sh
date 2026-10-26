@@ -88,6 +88,7 @@ if [ "$STAGE" = post ]; then           # probe configuration, probe transfer, al
   run s3_tgrid s3_score.py tgrid --bs 32
   run s8 s8_probe_k.py probe k --bs 16
   run s9 s9_alignment.py --n 300
+  run s10 s10_norm_dependence.py --n 50
   for a in a1_analysis a2_cifar a3_controls a4_probe; do rm -f $L/ok_$a; run $a $a.py; done
   touch $L/DONE_post; exit 0
 fi

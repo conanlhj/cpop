@@ -39,7 +39,6 @@ cpop/score.py           # CPOP, the ADM loader, and simplified feature-space bas
 experiments/            # the full evaluation protocol of the paper (s* = GPU steps, a* = CPU analysis)
 experiments/run_all.sh  # Docker runner for every step
 data/r1/                # per-sample scores and metadata behind every table and figure
-data/fig1_norm_dependence_v1.csv   # data of Figure 1 (unchanged from the original submission)
 ```
 
 ## Protocol
@@ -78,6 +77,7 @@ data reproduces `data/r1/analysis/*.md` byte for byte.
 | Table 14 — system-level effect | — | `a1_analysis.py` (§4) |
 | Table 15 — adaptive attacks | `s6_adaptive.py` | `data/r1/adaptive/*.npz` |
 | Cost (latency, memory) | `s0_bench.py` | `data/r1/bench.csv` |
+| Figure 1 — CPOP versus PGD-L2 norm | `s10_norm_dependence.py` | `make_figure1.py data/r1/norm_dependence.csv out/` |
 | Figures 2 and 3 | — | `make_figures.py data/r1/analysis/a1_tables.json out/` |
 | ADM GroupNorm check | `g0_groupnorm_check.py` | `data/r1/g0_groupnorm.json` |
 
