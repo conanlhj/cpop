@@ -1,0 +1,59 @@
+{
+ "asis_ignored_ckpt_keys": [
+  "mid_block.attentions.0.group_norm.bias",
+  "mid_block.attentions.0.group_norm.weight"
+ ],
+ "asis_missing_keys": [],
+ "fixed_ignored_ckpt_keys": [],
+ "fixed_missing_keys": [],
+ "fixed_gn_matches_ckpt": true,
+ "ckpt_gn_weight_stats": [
+  0.6946086287498474,
+  0.04995311051607132
+ ],
+ "t1_cos_asis_vs_fixed": [
+  0.9999756813049316,
+  0.9997921586036682
+ ],
+ "t1_relL2_asis_vs_fixed": [
+  0.006477971561253071,
+  0.020389065146446228
+ ],
+ "denoise_mse": {
+  "1": {
+   "asis": 0.5381585359573364,
+   "fixed": 0.5381249189376831
+  },
+  "10": {
+   "asis": 0.3021032512187958,
+   "fixed": 0.3020651638507843
+  },
+  "50": {
+   "asis": 0.12462727725505829,
+   "fixed": 0.12459465861320496
+  },
+  "100": {
+   "asis": 0.07236304879188538,
+   "fixed": 0.07234286516904831
+  },
+  "200": {
+   "asis": 0.03531455248594284,
+   "fixed": 0.03530256077647209
+  },
+  "500": {
+   "asis": 0.005902128294110298,
+   "fixed": 0.005890681408345699
+  }
+ },
+ "pgd_success": 0.9921875,
+ "auroc_asis": 0.9159848671259843,
+ "cpop_asis_clean_mean": 0.138469859957695,
+ "cpop_asis_adv_mean": 0.03883868828415871,
+ "auroc_fixed": 0.9159771776574803,
+ "cpop_fixed_clean_mean": 0.13846078515052795,
+ "cpop_fixed_adv_mean": 0.038842178881168365,
+ "spearman_clean": 0.9999962448930545,
+ "spearman_adv": 0.9999868186669644,
+ "n_clean": 512,
+ "n_adv": 254
+}

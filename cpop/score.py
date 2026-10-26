@@ -1,35 +1,49 @@
-"""Canonical reference implementation of CPOP and the baseline detectors used in the paper.
+"""Reference implementation of CPOP and the simplified feature-space baselines.
 
-CPOP (Cosine Perturbation Orientation Probe) scores an image from the *local directional
-stability* of a fixed pretrained diffusion denoising field -- without ever querying the
-protected classifier:
+CPOP (Cosine Perturbation Orientation Probe) scores an image from a fixed pretrained diffusion
+model alone -- it never queries the protected classifier:
 
-    CPOP(x) = E_{delta ~ N(0, sigma^2 I)} [ 1 - cos( s_theta(x, t), s_theta(x+delta, t) ) ]
+    CPOP(x) = E_{delta ~ N(0, sigma^2 I)} [ 1 - cos( v(x), v(x + delta) ) ],   v = eps_hat_theta(., t)
 
-where s_theta(., t) is the diffusion model's denoising output at a low timestep t. Adversarial
-inputs sit off the natural-image manifold where the restoring (normal) component of the score
-dominates and freezes its direction, giving a *small* CPOP; the detector score is therefore
+where eps_hat_theta is the model's noise prediction at a small integer timestep t. To leading order
+CPOP is (sigma^2 / 2) times the squared Frobenius norm of the Jacobian of the normalized field
+v / ||v||. Dense, high-frequency perturbations -- gradient-based L_inf attacks and benign noise of
+the same kind alike -- tend to align the noise estimate with the perturbation, which the probe
+then barely rotates, giving a *small* CPOP. The detector score is therefore
 
     D(x) = - CPOP(x)        (higher D => more suspicious)
 
-This module is environment-free; the per-table experiment scripts under ``experiments/`` show
-how it was driven on ImageNet/CIFAR-10 (they reproduce the exact numbers in the paper).
+This module is environment-free; ``experiments/`` holds the full evaluation protocol of the paper
+(splits, attacks, controls, baselines, analysis), and ``experiments/common.py`` its batched,
+seeded variant of the same computation.
 """
 from __future__ import annotations
 import torch
 import torch.nn.functional as F
 
+ADM_ID = "xutongda/adm_imagenet_256x256_unconditional"   # diffusers conversion of guided-diffusion 256x256_diffusion_uncond
+
+
+def load_adm(path: str = ADM_ID, device: str = "cuda", dtype=torch.float16):
+    """Load the default probe. ``attn_norm_num_groups=32`` is required: without it, diffusers 0.29
+    silently drops the mid-block attention GroupNorm weights of this conversion."""
+    from diffusers import UNet2DModel
+    unet = UNet2DModel.from_pretrained(path, torch_dtype=dtype, attn_norm_num_groups=32).to(device).eval()
+    for p in unet.parameters():
+        p.requires_grad_(False)
+    return unet
+
 
 @torch.no_grad()
-def cpop(images: torch.Tensor, unet, t: float = 1.0, sigma: float = 0.005, K: int = 8) -> torch.Tensor:
+def cpop(images: torch.Tensor, unet, t: int = 1, sigma: float = 0.005, K: int = 8) -> torch.Tensor:
     """Compute CPOP for a batch of images in [0, 1].
 
     Args:
         images: (B, 3, H, W) tensor in [0, 1].
-        unet:   a diffusion model whose ``unet(x, t).sample`` returns the denoising output for
-                inputs ``x`` in [-1, 1] (e.g. a ``diffusers`` ``UNet2DModel`` such as ADM-ImageNet
-                or DDPM-CIFAR10). Weights are frozen; the probe is never adapted to any classifier.
-        t:      diffusion timestep (noise level the model assumes). A continuous value is accepted.
+        unet:   an epsilon-prediction diffusion model whose ``unet(x, t).sample`` holds the noise
+                prediction in its first three channels for inputs ``x`` in [-1, 1] (e.g. ``load_adm()``
+                or ``google/ddpm-cifar10-32``). Weights are frozen; nothing is tuned per classifier.
+        t:      integer timestep index of the 1000-step schedule (t=1: sqrt(1 - abar_t) = 0.0148).
         sigma:  std of the isotropic pixel-space probe perturbation delta.
         K:      number of Monte Carlo probe samples.
 
@@ -38,11 +52,11 @@ def cpop(images: torch.Tensor, unet, t: float = 1.0, sigma: float = 0.005, K: in
     """
     B = images.shape[0]
     x = (images * 2 - 1).to(next(unet.parameters()).dtype)
-    tt = torch.full((B,), float(t), device=images.device, dtype=x.dtype)
+    tt = torch.full((B,), int(t), device=images.device, dtype=torch.long)
     base = unet(x, tt).sample[:, :3].reshape(B, -1).float()
     acc = torch.zeros(B, device=images.device)
     for _ in range(K):
-        probe = unet(x + torch.randn_like(x) * sigma, tt).sample[:, :3].reshape(B, -1).float()
+        probe = unet(x + torch.randn_like(x) * sigma, tt).sample[:, :3].reshape(B, -1).float()  # not clipped
         acc += 1.0 - F.cosine_similarity(base, probe, dim=1, eps=1e-12)
     return acc / K
 
@@ -54,7 +68,8 @@ def detector_score(images: torch.Tensor, unet, **kw) -> torch.Tensor:
 
 
 # --------------------------------------------------------------------------------------------------
-# Baseline detectors used for comparison (classifier-coupled; require access to the protected model)
+# Simplified classifier-coupled baselines (require access to the protected model). The paper's
+# numbers come from experiments/s5_feature_baselines.py, which also has class-conditional variants.
 # --------------------------------------------------------------------------------------------------
 @torch.no_grad()
 def feature_squeezing(images: torch.Tensor, clf) -> torch.Tensor:

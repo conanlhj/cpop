@@ -1,11 +1,12 @@
-# Experiments were run inside Docker image `cpop_v2` (CUDA, RTX 4090).
+# Versions used for the paper (Python 3.10, CUDA 12.1, one RTX 4090).
 torch==2.3.1
-torchvision
+torchvision==0.18.1
 diffusers==0.29.2
-torchattacks
-numpy
-pandas
-scikit-learn
-matplotlib
+huggingface-hub==0.23.4
+torchattacks==3.3.0
+numpy==2.2.6
+pandas==2.3.3
+scipy==1.15.3
+scikit-learn==1.7.2
+matplotlib==3.10.8
 pillow
-tqdm
